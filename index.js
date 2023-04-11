@@ -2,94 +2,57 @@ const redux = require('redux');
 const createStore = redux.createStore;
 const bindActionCreators = redux.bindActionCreators;
 const combineReducers = redux.combineReducers;
+const produce = require('immer').produce;
+const applyMiddleware = redux.applyMiddleware;
+const logger = require('redux-logger').createLogger();
+const axios = require('axios');
 
-const CAKE_ORDERED = 'CAKE_ORDERED';
-const CAKE_RESTOCK = 'CAKE_RESTOCK';
-const ICECREAM_ORDERED = 'ICECREAM_ORDERED';
-const ICECREAM_RESTOCK = 'ICECREAM_RESTOCK';
+const state = {
+    loading: false,
+    data: [],
+    error:'',
+}
 
-function orderCake(payload) {
+const FETCH_USERS_REQUESTED = 'FETCH_USERS_REQUESTED';
+const FETCH_USERS_SUCCEEDED = 'FETCH_USERS_SUCCEEDED';
+const FETCH_USERS_REJECTED = 'FETCH_USERS_REJECTED';
+
+const fetchUsersRequest = (url) => {
+    //fetch user
     return {
-        type: CAKE_ORDERED,
-        payload,
+        type: FETCH_USERS_REQUESTED
+    }
+}
+const fetchUsersSuccess = (url) => {
+    //fetch user
+    return {
+        type: FETCH_USERS_SUCCEEDED,
+        payload: users,
+    }
+}
+const fetchUsersError = (url) => {
+    //fetch user
+    return {
+        type: FETCH_USERS_REJECTED,
+        payload: error,
     }
 }
 
-function restockCake(payload) {
-    return {
-        type: CAKE_RESTOCK,
-        payload,
-    }
-}
-
-function orderIceCream(payload) {
-    return {
-        type: ICECREAM_ORDERED,
-        payload,
-    }
-}
-
-function restockIceCream(payload) {
-    return {
-        type: ICECREAM_RESTOCK,
-        payload,
-    }
-}
-
-const initialCakeState = {
-    numOfCakes: 10,
-}
-const initialIceCreamState = {
-    numOfIcecream: 20
-}
-
-const cakeReducer = (state = initialCakeState, action) => {
+const usersReducer = (state, action) => {
     switch(action.type){
-        case CAKE_ORDERED:
-            return {
-                ...state,
-                numOfCakes: state.numOfCakes - action.payload,
-            }
-        case CAKE_RESTOCK:
-            return {
-                ...state,
-                numOfCakes: state.numOfCakes + action.payload,
-            }
-        default:
-            return state
+        case FETCH_USERS_REQUESTED:
+            return produce((state, draft) => {
+                draft.loading = true;
+        })
+        case FETCH_USERS_REJECTED:
+            return produce((state, draft) => {
+                draft.loading = false;
+                draft.error = draft.error;
+        })
+        case FETCH_USERS_SUCCEEDED:
+            return produce((state, draft) => {
+                draft.loading = false;
+                draft.data = payload.data;
+        })
     }
 }
-const iceCreamReducer = (state = initialIceCreamState, action) => {
-    switch(action.type){
-        case ICECREAM_ORDERED:
-            return {
-                ...state,
-                numOfIcecream: state.numOfIcecream - action.payload,
-            }
-        case ICECREAM_RESTOCK:
-            return {
-                ...state,
-                numOfIcecream: state.numOfIcecream + action.payload,
-            }
-        default:
-            return state
-    }
-}
-
-const rootReducer = combineReducers({
-    cake: cakeReducer,
-    icecream: iceCreamReducer,
-})
-const store = createStore(rootReducer);
-console.log("initial state", store.getState())
-
-const unsubscribe = store.subscribe(() => console.log('updated cake state', store.getState()))
-
-const actions = bindActionCreators({orderCake, restockCake, orderIceCream, restockIceCream}, store.dispatch)
-
-actions.orderCake(1)
-actions.orderIceCream(5)
-actions.orderCake(1)
-actions.restockCake(3)
-
-unsubscribe()
